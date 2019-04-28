@@ -30,7 +30,7 @@ class Car:
         self.count_states = ['COUNT_LINE', 'OFF_LINE']
 
         # direction space (counter-clockwise)
-        self.direction_space = [(1. 0), (0, 1), (-1, 0), (0, -1)]
+        self.direction_space = [(1, 0), (0, 1), (-1, 0), (0, -1)]
 
     def __init_globals(self):
         ## Globals in the class
@@ -44,15 +44,16 @@ class Car:
         # uniquely determine which segment is the car on
         # by specifying the most recently passed by coordinate
         # and the direction the car is going
-        self.position = (0, 0)
+        self.position = (-1, 1) # initial position
         self.direction = (1, 0)
 
     def __init__(self):
         self.__init_constants()
         self.__init_globals()
+        self.__init_map()
 
         ## init
-        self.board = pyfirmata.ArduinoMega('/dev/ttyUSB1')
+        self.board = pyfirmata.ArduinoMega('/dev/ttyUSB0')
         
         self.__init_motor()
         self.__init_infrared()
@@ -61,6 +62,20 @@ class Car:
         it = pyfirmata.util.Iterator(self.board)
         it.start()
         sleep(0.1)
+        
+    def __init_map(self):
+        self.map = []
+        for i in range(0, 10):
+            self.map.append([0]*10)
+        
+        # the platform area
+        for i in range(3, 7):
+            for j in range(3,7):
+                self.map[i][j] = 1
+        
+        # assume all obstacles are there for convenience
+        for pos in ((8, 1), (8, 4), (8, 8), (5, 8), (1, 5), (1, 8)):
+            self.map[pos[0]][pos[1]] = 1
         
     def __init_motor(self):
         self.motor = {}
@@ -172,6 +187,7 @@ class Car:
             self.__go_straight(0, 0)  # suitable to stay still?
             sleep(self.TURN_WAIT_INTERVAL)
             self.__set_state('FOLLOW_LINE')
+            
         
     def __motor(self, which_motor, speed):   
         one = 1
@@ -187,7 +203,7 @@ class Car:
         self.motor['{}_pwm'.format(which_motor)].write(speed)
         
         # follow the white line
-    def __follow_line(self, speed=SPEED):
+    def __follow_line(self):
         if not self.__is_state_equal('FOLLOW_LINE'):
             return
         
@@ -218,16 +234,17 @@ class Car:
 
             
     # pos: a tuple (x, y), returns True if succeeds, otherwise, False is returned
-    def move(self, pos):
+    # the direction of the car when it reaches the destination
+    def move(self, pos, dest_direction):
         # perform every loop
-        # self.__count_line()
-
+        self.__count_line()
+        
         # figure out the relative position
 
-
+        print('position', self.position)
         # go ahead go back
-
-        pass
+        self.__follow_line()
+        
     
     def loop(self):
         while True:
@@ -235,7 +252,7 @@ class Car:
             
     def __test(self):
         # TEST1 __go_straight success
-        #self.__go_straight(0.5)
+        #self.__go_straight(0.5, 0.5)
             
         # TEST2 __turn90_aux
         # self.__turn90_aux(0.5)
@@ -251,7 +268,7 @@ class Car:
         # self.__follow_line()
         
         # TEST6 move & count lines
-            
+        self.move((2, 0), (1, 0))
             
 car = Car()
 car.loop()
