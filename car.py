@@ -4,7 +4,8 @@ from time import sleep
 class Car:
      # The normal speed
     SPEED = 0.5
-    def __init__(self):
+
+    def __init_constants(self):
         ## CONSTANTS
         # actual speed(right):speed(left)
         self.LEFT_RATIO = 0.8
@@ -20,15 +21,36 @@ class Car:
        
         # weight for adjust go_straight (order: infrared 0 .. 3)
         self.WEIGHT = (3, 1, -1, -3)
-        
+
+        # the speed of the 2 motors
+        self.speed = {'left': 0.85, 'right': 0.85}
+
+        # states space
+        self.trans_states = ['TURN', 'FOLLOW_LINE']
+        self.count_states = ['COUNT_LINE', 'OFF_LINE']
+
+        # direction space (counter-clockwise)
+        self.direction_space = [(1. 0), (0, 1), (-1, 0), (0, -1)]
+
+    def __init_globals(self):
         ## Globals in the class
         # variables for proper turning state transition
         # if not is following the line, turn left
-        self.trans_states = ['TURN', 'FOLLOW_LINE']
         self.state = 'FOLLOW_LINE'
-        
-        # the speed of the 2 motors
-        self.speed = {'left': 0.85, 'right': 0.85}
+        self.count_state = 'OFF_LINE'
+
+
+        # position
+        # uniquely determine which segment is the car on
+        # by specifying the most recently passed by coordinate
+        # and the direction the car is going
+        self.position = (0, 0)
+        self.direction = (1, 0)
+
+    def __init__(self):
+        self.__init_constants()
+        self.__init_globals()
+
         ## init
         self.board = pyfirmata.ArduinoMega('/dev/ttyUSB1')
         
@@ -74,6 +96,9 @@ class Car:
             res = 1 - res
         return res
     
+    def __is_online(self, which_one):
+        return self.__get_infrared(which_one) == self.WHITE
+
     def __set_state(self, state):
         assert state in self.trans_states, '{} is not a valid state!'.format(state)
         self.state = state
@@ -81,6 +106,14 @@ class Car:
     def __is_state_equal(self, state):
         assert state in self.trans_states, '{} is not a valid state!'.format(state)
         return self.state == state
+
+    def __set_count_state(self, state):
+        assert state in self.count_states, '{} is not a valid count state!'.format(state)
+        self.count_state = state
+        
+    def __is_count_state_equal(self, state):
+        assert state in self.count_states, '{} is not a valid count state!'.format(state)
+        return self.count_state == state
     
     def __go_straight(self, speed=SPEED):
         self.__motor('left', speed)
@@ -98,6 +131,15 @@ class Car:
         self.__motor('left', left_speed)
         self.__motor('right', right_speed)
     
+    # turn_direction: 'left' or 'right'
+    def __update_direction(turn_direction):
+        if turn_direction == 'left':
+            offset = 1
+        else:
+            offset = -1
+
+        self.direction = self.direction_space[(self.direction_space.index(turn_direction) + offset + 4) % 4]
+
     
     # direction:
     # speed > 0: left
@@ -117,9 +159,13 @@ class Car:
         
         self.__turn(speed)
         
-        detector = 0     # turn left
+        
         if speed < 0:    # turn right
             detector = 3
+
+        else:
+            detector = 0     # turn left
+
             
         #print('infrared:', self.__get_infrared(detector))
         if self.__get_infrared(detector) == self.WHITE:
@@ -151,21 +197,36 @@ class Car:
         self.__go_straight(self.speed['left'] + diff, self.speed['right'] - diff)
         # print('left:', self.speed['left'], 'right:', self.speed['right'])
         
-            
-#    def set_speed(self, left_speed, right_speed):
-#        if left_speed > 1:
-#            left_speed = 1
-#        if left_speed < 0:
-#            left_speed = 0
-#        if right_speed > 1:
-#            right_speed = 1
-#        if right_speed < 0:
-#            right_speed = 0
-#        self.speed['left'] = left_speed
-#        self.speed['right'] = right_speed
+    def __update_position(self):
+        self.position = tuple(self.position[i] + self.direction[i] 
+            for i in range(0, len(self.position)))
+
+    def __count_line(self):
+        if self.__is_state_equal('FOLLOW_LINE'):
+            if self.__is_count_state_equal('OFF_LINE'):
+                if self.__is_online(4):
+                    self.__set_count_state('COUNT_LINE')
+
+            if self.__is_count_state_equal('COUNT_LINE'):
+                if not self.__is_online(4):
+                    self.__set_count_state('OFF_LINE')
+                    self.__update_position()
+
+        if self.__is_state_equal('TURN'):
+            # figure the special case out
+            pass
+
             
     # pos: a tuple (x, y), returns True if succeeds, otherwise, False is returned
     def move(self, pos):
+        # perform every loop
+        # self.__count_line()
+
+        # figure out the relative position
+
+
+        # go ahead go back
+
         pass
     
     def loop(self):
