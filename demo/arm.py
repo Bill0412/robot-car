@@ -8,6 +8,9 @@ def servo_power_on():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(23, GPIO.OUT)
     GPIO.output(23, GPIO.HIGH)
+    
+def servo_power_off():
+    GPIO.cleanup()
 
 ser = serial.Serial("/dev/serial0", 9600)
 
@@ -37,38 +40,18 @@ def release(t=3):
     time.sleep(t)
     
 def test_all():
-
-    servo(3, 23, 40)
-    time.sleep(0.5)
-    servo(3, 70, 40)
-    time.sleep(0.5)
-    servo(2, 140, 40)
-    time.sleep(0.4)
-    servo(2, 160, 40)
-    servo(1, 0, 40)
-    time.sleep(0.5)
-    servo(1, 90, 40)
-    time.sleep(0.6)
-    servo(4, 60, 40)
-    time.sleep(0.3)
-    servo(4, 96, 40)
-    time.sleep(0.3)
-    servo(6, 40, 40)
-    time.sleep(2)
-    servo(6, 70, 40)
-    time.sleep(0.5)
-    servo(5, 0, 40)
-    time.sleep(0.3)
-    servo(5, 180, 40)
+    servo(2, 140,10,t=0)
+    #servo(3, 150,10,t=0)
+    servo(4, 120,10,t=0)
     time.sleep(0.3)
 
 def init(first_servo_angle=90):
-    servo(1, 90)
+    servo(1, 85)
     servo(2, 180)
     servo(3, 90)
     servo(4, 90)
     servo(5, 30, 40)
-    servo(6, 30, 40)
+    servo(6, 70, 40)
     
 def catch_things(direction_index,which_thing):
     things=['block','cube','redBull','tennis','leHu','coolYY','milk','ADmilk','beer','yakult']
@@ -145,8 +128,12 @@ def servo(n, angle, speed=40, t=0.2):
 
 
 servo_power_on()
-init()
-GPIO.cleanup()
+try:
+    while True:
+        init()
+        #test_all()
+except:
+    GPIO.cleanup()
     
     
     
