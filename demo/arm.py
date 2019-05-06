@@ -6,17 +6,46 @@ import time
 ser = serial.Serial("/dev/serial0", 9600)
 
 def servo(n, angle, speed):
+    if n == 4:
+        angle = 180 - angle
     ser.write(GetMessage(n, angle, speed))
-    
-i = 6
-while True:
-    
-    ser.write(GetMessage(3, 90, 40))
-    ser.write(GetMessage(2, 100, 40))
-    ser.write(GetMessage(1, 60, 40))
-    ser.write(GetMessage(4, 140, 40))
-    time.sleep(0.3)
-    ser.write(GetMessage(i, 40, 40))
-    time.sleep(10)
-    ser.write(GetMessage(i, 70, 40))
+
+def grab_staff():
+    servo(6, 45, 40)
     time.sleep(0.5)
+    
+def release_staff():
+    servo(6, 75, 40)
+    time.sleep(0.5)
+    
+    
+    
+def test_all():
+    servo(3, 60, 40)
+    time.sleep(0.5)
+    servo(3, 40, 40)
+    time.sleep(0.5)
+    servo(2, 170, 40)
+    time.sleep(0.4)
+    servo(2, 150, 40)
+    servo(1, 0, 40)
+    time.sleep(0.5)
+    servo(1, 90, 40)
+    time.sleep(0.6)
+    servo(4, 60, 40)
+    time.sleep(0.3)
+    servo(6, 40, 40)
+    time.sleep(2)
+    servo(6, 70, 40)
+    time.sleep(0.5)
+    
+
+
+    
+while True:
+    grab_staff()
+    time.sleep(4)
+    release_staff()
+    
+    
+
