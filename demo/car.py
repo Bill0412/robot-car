@@ -53,7 +53,7 @@ class Car:
         self.__init_map()
 
         ## init
-        self.board = pyfirmata.ArduinoMega('/dev/ttyUSB0')
+        self.board = pyfirmata.ArduinoMega('/dev/ttyUSB_MEGA')
         
         self.__init_motor()
         self.__init_infrared()
@@ -238,7 +238,7 @@ class Car:
             pass
 
     # returns the position difference in tuple, pos2 - pos1
-    def __pos_diff(self, pos1, pos2)
+    def __pos_diff(self, pos1, pos2):
         return (pos2[0] - pos1[0], pos2[1] - pos1[0])
             
     # pos: a tuple (x, y), returns True if succeeds, otherwise, False is returned
@@ -303,7 +303,7 @@ class Car:
         # self.__turn90_aux(0.5)
             
         # TEST3 test the infrared sensors
-        # self.__test_infrared()
+        self.__test_infrared()
             
         # TEST4 test turn90
         # self.__set_state('TURN')
@@ -313,7 +313,7 @@ class Car:
         # self.__follow_line()
         
         # TEST6 move & count lines
-        self.move((2, 0), (1, 0))
+        # self.move((2, 0), (1, 0))
             
 car = Car()
 car.loop()
